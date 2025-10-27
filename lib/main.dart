@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Material App',
+      title: 'Movie App',
       initialRoute: 'Inicio',       
       routes: {
           'Inicio': (BuildContext context) => HomePage(),
