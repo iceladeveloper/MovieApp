@@ -1,27 +1,41 @@
-
-
 import 'package:flutter/material.dart';
-import 'package:movie_widgets/src/pages/home_page.dart';
-//Importación de la página del home screen o Splash Screen
+import 'src/pages/home_page.dart';
+import 'src/pages/detail_page.dart'; // Importa DetailPage y DetailPageArguments
 import 'src/pages/splash_screen.dart'; 
 
-void main() => runApp(const MyApp()); // Usamos 'const' en runApp para buenas prácticas
-
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Movie App',
-      initialRoute: 'splash', //cambiamos el inicio de nuestra app hacia el splash screen     
+      title: 'CineMóvil',
+      debugShowCheckedModeBanner: false,
+      
+      // La ruta inicial debe ser la pantalla de carga (splash)
+      initialRoute: 'splash',       
+      
       routes: {
-         //Ruta que se iniciará al abrir la app
-         'splash': (BuildContext context) => const SplashScreen(),
-
-         //Ruta hacia la página principal
-         'Inicio': (BuildContext context) => HomePage(),
-      }
+          'splash': (BuildContext context) => const SplashScreen(), // 1. Muestra Splash
+          'Inicio': (BuildContext context) => const HomePage(), // 2. Navega a Home
+          // RUTA DE DETALLE (usa DetailPageArguments)
+          'detalle': (BuildContext context) {
+            // Usa ModalRoute para obtener los argumentos pasados (requiere DetailPageArguments)
+            final args = ModalRoute.of(context)!.settings.arguments as DetailPageArguments;
+            return DetailPage(arguments: args);
+          },
+      },
+      
+      theme: ThemeData(
+         primarySwatch: Colors.blue, 
+         appBarTheme: const AppBarTheme(
+           backgroundColor: Colors.black, 
+         )
+      ),
     );
   }
 }
