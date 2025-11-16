@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'movie_detail_page.dart';
+import 'movie.dart';
+import 'search_page.dart';
+import 'account_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,7 +15,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _selectedIndex = 0;
 
+  // Datos de ejemplo (listas horizontales)
   final List<Map<String, dynamic>> continuarViendo = [
     {'title': 'Amor Oculto', 'image': 'assets/amor_oculto.jpg'},
     {'title': 'Young Sheldon', 'image': 'assets/young_sheldon.jpg'},
@@ -29,17 +36,16 @@ class _HomePageState extends State<HomePage>
     {'title': 'Game of Thrones', 'image': 'assets/game_of_thrones.jpg'},
   ];
 
-  int _selectedIndex = 0;
+  // Catálogo desde Firebase
+  List<Movie> peliculasFirebase = [];
+  List<Movie> seriesFirebase = [];
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _selectedIndex = _tabController.index;
-      });
-    });
+    _loadMovies();
   }
 
   @override
@@ -48,7 +54,23 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
-  /// Lista horizontal con imágenes, títulos y Stack con ícono
+  Future<void> _loadMovies() async {
+    final pelis = await fetchMovies('peliculas');
+    final seriesList = await fetchMovies('series');
+    setState(() {
+      peliculasFirebase = pelis;
+      seriesFirebase = seriesList;
+      loading = false;
+    });
+  }
+
+  Future<List<Movie>> fetchMovies(String collection) async {
+    final snapshot = await FirebaseFirestore.instance.collection(collection).get();
+    return snapshot.docs
+        .map((doc) => Movie.fromMap(doc.id, doc.data()))
+        .toList();
+  }
+
   Widget _buildHorizontalList(List<Map<String, dynamic>> items) {
     double screenWidth = MediaQuery.of(context).size.width;
     double imageWidth = screenWidth * 0.3;
@@ -79,12 +101,11 @@ class _HomePageState extends State<HomePage>
                         height: imageHeight,
                       ),
                     ),
-                    // Ícono de "play" centrado sobre la imagen
                     Positioned.fill(
                       child: Align(
                         alignment: Alignment.center,
                         child: Container(
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.black38,
                             shape: BoxShape.circle,
                           ),
@@ -102,18 +123,15 @@ class _HomePageState extends State<HomePage>
                   ],
                 ),
                 const SizedBox(height: 6),
-                Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    item['title'],
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  item['title'],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -123,7 +141,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// Tab de inicio
   Widget _buildHomeTab() {
     double screenWidth = MediaQuery.of(context).size.width;
     double featuredHeight = screenWidth * 9 / 16;
@@ -153,48 +170,42 @@ class _HomePageState extends State<HomePage>
           ),
           const SizedBox(height: 16),
 
-          // Continuar viendo
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               'Continuar viendo',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.greenAccent,
-              ),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.greenAccent),
             ),
           ),
           const SizedBox(height: 8),
           _buildHorizontalList(continuarViendo),
           const SizedBox(height: 20),
 
-          // Top en México
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               'Top en México',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.greenAccent,
-              ),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.greenAccent),
             ),
           ),
           const SizedBox(height: 8),
           _buildHorizontalList(topMexico),
           const SizedBox(height: 20),
 
-          // Sugerencias a tus gustos
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               'Sugerencias a tus gustos',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.greenAccent,
-              ),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.greenAccent),
             ),
           ),
           const SizedBox(height: 8),
@@ -205,35 +216,90 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  Widget _buildCatalogTab(List<Movie> items) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 0.7,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => MovieDetailPage(movie: item)));
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    item.imageUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                item.title,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> get _bottomPages => [
+        Scaffold(
+          backgroundColor: Colors.black87,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            elevation: 0,
+            title: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.greenAccent,
+              labelColor: Colors.greenAccent,
+              unselectedLabelColor: Colors.grey,
+              tabs: const [
+                Tab(text: 'Inicio'),
+                Tab(text: 'Películas'),
+                Tab(text: 'Series'),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildHomeTab(),
+              loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildCatalogTab(peliculasFirebase),
+              loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildCatalogTab(seriesFirebase),
+            ],
+          ),
+        ),
+        const SearchPage(),
+        const AccountPage(),
+      ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        title: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.greenAccent,
-          labelColor: Colors.greenAccent,
-          unselectedLabelColor: Colors.grey,
-          tabs: const [
-            Tab(text: 'Inicio'),
-            Tab(text: 'Películas'),
-            Tab(text: 'Series'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildHomeTab(),
-          const Center(
-              child: Text('Películas', style: TextStyle(color: Colors.white))),
-          const Center(
-              child: Text('Series', style: TextStyle(color: Colors.white))),
-        ],
-      ),
+      body: _bottomPages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.greenAccent.shade100,
         currentIndex: _selectedIndex,
@@ -245,7 +311,9 @@ class _HomePageState extends State<HomePage>
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Mi cuenta'),
         ],
         onTap: (index) {
-          _tabController.animateTo(index);
+          setState(() {
+            _selectedIndex = index;
+          });
         },
       ),
     );
