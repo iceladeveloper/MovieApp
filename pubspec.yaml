@@ -30,10 +30,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.5.0 # <--- ¡Actualizado a la última versión estable (1.5.0)!
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
+  # Firebase Core para inicializar la app
+  firebase_core: ^2.27.0 # Usar una versión real
+  # Firebase Auth para el inicio de sesión y registro
+  firebase_auth: ^4.17.0 # Usar una versión real
+  # Cloud Firestore para la base de datos de películas
+  cloud_firestore: ^4.15.0 # Usar una versión real
+  # Para hacer peticiones HTTP a la API de OMDB
+  http: ^1.2.0 # Usar una versión real
+  # Para la gestión del estado (Auth y Movies)
+  provider: ^6.1.1 # Usar una versión real
+  cupertino_icons: ^1.0.6
 
 dev_dependencies:
   flutter_test:

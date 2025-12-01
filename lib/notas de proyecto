@@ -1,0 +1,27 @@
+si se presenta el error: "error critico: configuracion incompleta o fallida" se puede deber a que no esta configurada la parte de firebase 
+se puede corregir ejecutando el siguiente comando para mac:
+
+dart pub global activate flutterfire_cli
+
+nos mostrara algo similar a esto 
+
+Package flutterfire_cli is currently active at version 1.3.1.
+Downloading packages... . 
+The package flutterfire_cli is already activated at newest available version.
+To recompile executables, first run `dart pub global deactivate flutterfire_cli`.
+Installed executable flutterfire.
+Warning: Pub installs executables into $HOME/.pub-cache/bin, which is not on your path.
+You can fix that by adding this to your shell's config file (.zshrc, .bashrc, .bash_profile, etc.):
+
+  export PATH="$PATH":"$HOME/.pub-cache/bin"
+
+Activated flutterfire_cli 1.3.1.
+
+debemos añadir la path al shell
+
+depues de añadirlo se debera solucionar el problema
+
+ahora podemos ejectuar el proyecto con el comando
+
+flutter run
+
